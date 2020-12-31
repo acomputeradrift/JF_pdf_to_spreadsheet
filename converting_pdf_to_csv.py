@@ -10,7 +10,7 @@ import PyPDF2
 import pdfplumber
 import re
 import os
-import asyncio
+
 
 
 #get the number of pages
@@ -74,6 +74,7 @@ def get_transaction_info_from(pdf_at_complete_path):
 		all_transactions_on_this_page_list = []
 		this_transaction_list = []
 		this_page = get_the_text_from(pdf_at_complete_path,page)
+		#print(this_page)
 		 #this gets the text from one page
 		first_line = this_page.partition('\n')[0] #this gets the first line of one page for comparison
 		second_line = this_page.partition('\n')[1]
@@ -81,6 +82,7 @@ def get_transaction_info_from(pdf_at_complete_path):
 			#print('Transactions found:')
 			#print(f'This page data:\n{this_page}')
 			lines_containing_dates_list = get_lines_containing_dates_list_from(this_page)
+
 			#use the date list to get each transaction line, ignoring anything without a date at the start
 			for line in lines_containing_dates_list:
 				this_line_list = line.split()
@@ -117,42 +119,128 @@ def get_transaction_info_from(pdf_at_complete_path):
 	return all_transaction_lists_on_this_pdf_list
 	#return this_transaction_list
 
+def get_lines_containing_account_numbers_list_from(this_page):
+	account_regex = r'#'
+	lines_containing_account_numbers_list = []
+	for line in this_page.split('\n'):   #this_page.split('\n'):
+		match = re.search(account_regex,line)
+		if match:
+			lines_containing_account_numbers_list.append(line)
+	return lines_containing_account_numbers_list
+
+
+def get_new_style_transaction_info_from(pdf_at_complete_path):
+	number_of_pages = get_number_of_pages_from(pdf_at_complete_path)
+	all_transaction_lists_on_this_pdf_list = []
+	for page in range(number_of_pages):
+		all_transactions_on_this_page_list = []
+		this_transaction_list = []
+		this_page = get_the_text_from(pdf_at_complete_path,page)
+		#print(this_page)
+		 #this gets the text from one page
+		first_line = this_page.partition('\n')[0] #this gets the first line of one page for comparison
+		second_line = this_page.partition('\n')[1]
+		if 'TRANSACTION' in first_line or 'TRANSACTION' in second_line:
+			print(f'Transactions found:\n {this_page}\n----------------------------')
+			#print(f'This page data:\n{this_page}')
+			lines_containing_account_numbers_list = get_lines_containing_account_numbers_list_from(this_page)
+
+			#use the date list to get each transaction line, ignoring anything without a date at the start
+			for line in lines_containing_account_numbers_list:
+				print(line)
+				print('---------------------------------------')
+	# 			this_line_list = line.split()
+	# 			date = this_line_list[0]
+	# 			#get acount type by combining two words
+	# 			account_type = this_line_list[1] + ' ' + this_line_list[2]
+	# 			currency_index = this_line_list.index('CAD') #this is the anchor from which all else links
+	# 			product_code = this_line_list[currency_index-1]
+	# 			product_code_index = currency_index-1 #somewhere between 4 and 6
+
+	# 			all_words_in_transaction_description = []
+	# 			for i in range(3, product_code_index):
+	# 				all_words_in_transaction_description.append(this_line_list[i])
+	# 			transaction_description = ' '.join(all_words_in_transaction_description)
+
+	# 			currency = this_line_list[currency_index]
+	# 			number_of_units = this_line_list[currency_index+1]
+	# 			unit_price = this_line_list[currency_index+2]
+	# 			gross_amount = this_line_list[currency_index+3]
+	# 			deduction = this_line_list[currency_index+4]
+	# 			cash_account_transaction = this_line_list[currency_index+5]
+	# 			try:
+	# 				net_amount = this_line_list[currency_index+6]
+	# 			except IndexError:
+	# 				net_amount = '-'
+	# 			this_transaction_list = [date,account_type,product_code,transaction_description,currency,number_of_units,unit_price,gross_amount,deduction,cash_account_transaction,net_amount]
+	# 			#print(this_transaction_list)
+	# 			all_transactions_on_this_page_list.append(this_transaction_list) 
+	# 		#print(all_transactions_on_this_page_list)
+	# 	# else:
+	# 	# 	print('No transactions found on this page.')
+	# 	all_transaction_lists_on_this_pdf_list.append(all_transactions_on_this_page_list)
+			
+	# return all_transaction_lists_on_this_pdf_list
+	# #return this_transaction_list
+
 #-----------------------------------------------------VARIABLES-------------------------------
 
 total_list_of_transaction_objects = []
 #my_pdf = '/Users/Jamie/Desktop/Quarterly statement.pdf - 2019 339199914.pdf'
-path = '/Users/Jamie/Desktop/pdf_files/Old_Statements/'
+#path = '/Users/Jamie/Desktop/pdf_files/Old_Statements/'
+old_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
+new_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
 
-new_style_file_name = 'Quarterly statement.pdf - 2020 339199914 (3).pdf'
-old_style_file_name = 'Quarterly statement.pdf - 2019 339199914 (2).pdf'  #multipage
 #-----------------------------------------------------BEGIN-------------------------------
 
 #Old Style PDFs
-for filename in os.listdir(path):
+# for filename in os.listdir(old_style_path):
+# 	print(f'Filename:{filename}')
+# 	pdf_at_complete_path = os.path.join(old_style_path, filename)
+# 	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
+# 	all_transaction_lists_on_this_pdf_list = get_transaction_info_from(pdf_at_complete_path)
+# 	for transaction_lists in all_transaction_lists_on_this_pdf_list:
+# 		for transaction in transaction_lists:
+# 			#create and update the object
+# 			this_transaction = Transaction(transaction[0])
+# 			this_transaction.account_type = transaction[1]
+# 			this_transaction.transaction_description = transaction[2]
+# 			this_transaction.product_code = transaction[3]
+# 			this_transaction.currency = transaction[4]
+# 			this_transaction.number_of_units = transaction[5]
+# 			this_transaction.unit_price = transaction[6]
+# 			this_transaction.gross_amount = transaction[7]
+# 			this_transaction.deduction = transaction[8]
+# 			this_transaction.cash_account_transaction = transaction[9]
+# 			this_transaction.net_amount = transaction[10]
+# 			total_list_of_transaction_objects.append(this_transaction
+
+
+#New Style PDFs
+for filename in os.listdir(new_style_path):
 	print(f'Filename:{filename}')
-	pdf_at_complete_path = os.path.join(path, filename)
+	pdf_at_complete_path = os.path.join(new_style_path, filename)
 	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
-	all_transaction_lists_on_this_pdf_list = get_transaction_info_from(pdf_at_complete_path)
-	for transaction_lists in all_transaction_lists_on_this_pdf_list:
-		for transaction in transaction_lists:
-			#create and update the object
-			this_transaction = Transaction(transaction[0])
-			this_transaction.account_type = transaction[1]
-			this_transaction.transaction_description = transaction[2]
-			this_transaction.product_code = transaction[3]
-			this_transaction.currency = transaction[4]
-			this_transaction.number_of_units = transaction[5]
-			this_transaction.unit_price = transaction[6]
-			this_transaction.gross_amount = transaction[7]
-			this_transaction.deduction = transaction[8]
-			this_transaction.cash_account_transaction = transaction[9]
-			this_transaction.net_amount = transaction[10]
-			total_list_of_transaction_objects.append(this_transaction)
+	all_transaction_lists_on_this_pdf_list = get_new_style_transaction_info_from(pdf_at_complete_path)
+# 	for transaction_lists in all_transaction_lists_on_this_pdf_list:
+# 		for transaction in transaction_lists:
+# 			#create and update the object
+# 			this_transaction = Transaction(transaction[0])
+# 			this_transaction.account_type = transaction[1]
+# 			this_transaction.transaction_description = transaction[2]
+# 			this_transaction.product_code = transaction[3]
+# 			this_transaction.currency = transaction[4]
+# 			this_transaction.number_of_units = transaction[5]
+# 			this_transaction.unit_price = transaction[6]
+# 			this_transaction.gross_amount = transaction[7]
+# 			this_transaction.deduction = transaction[8]
+# 			this_transaction.cash_account_transaction = transaction[9]
+# 			this_transaction.net_amount = transaction[10]
+# 			total_list_of_transaction_objects.append(this_transaction)
 
 
-
-for transaction_object in total_list_of_transaction_objects:
-	print(f'{transaction_object.__dict__}\n')
+# for transaction_object in total_list_of_transaction_objects:
+# 	print(f'{transaction_object.__dict__}\n')
 
 
 

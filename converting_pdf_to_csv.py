@@ -39,6 +39,12 @@ class Transaction:
 			self.cash_account_transaction = ''
 			self.net_amount = ''
 
+class Account:
+		def __init__(self,number):
+			self.number = number
+			self.name = ''
+			self.balance = 0
+
 
 def get_number_of_pages_from(my_pdf):
     with open(my_pdf, 'rb') as f:
@@ -183,12 +189,62 @@ def get_new_style_transaction_info_from(pdf_at_complete_path):
 	# return all_transaction_lists_on_this_pdf_list
 	# #return this_transaction_list
 
+def get_your_account_object_list_from(your_account_page):
+	account_object_list = []
+	account_number_list = []
+	account_name_list = []
+	account_numbers_regex = r'(?<=Account number:).+?(?=\n)'
+	account_number_list = re.findall(account_numbers_regex, your_account_page)
+	#breakdown the string into lines
+	line_list = your_account_page.splitlines()
+	for line in line_list:
+		for account_number in account_number_list:
+			if account_number in line:
+				index = line_list.index(line)
+				index_for_the_line_above = index - 1
+				verbose_account_name = line_list[index_for_the_line_above]
+				account_name = verbose_account_name.split(' - ')
+				account_name_list.append(account_name[0])
+	for i, account_number in enumerate(account_number_list):
+		this_account_object = Account(account_number)
+		this_account_object.name = account_name_list[i]
+		account_object_list.append(this_account_object)
+	return account_object_list
+
+
+
+def get_your_account_page_list_from(pdf_at_complete_path): 
+	#this gets the 'your account' pages and combines them if they are on multipe pages then returns the list of them
+	your_account_pages_list = []
+	full_account_string = '' #these two lines are for combining multiple page 'your accounts'
+	number_of_account_pages = 0
+	number_of_pages = get_number_of_pages_from(pdf_at_complete_path)
+	all_transaction_lists_on_this_pdf_list = []
+	for page in range(number_of_pages):
+		all_transactions_on_this_page_list = []
+		this_transaction_list = []
+		this_page = get_the_text_from(pdf_at_complete_path,page)
+		# print(this_page)
+		# print('---------------------------------------')
+		first_line = this_page.partition('\n')[0] #this gets the first line of one page for comparison
+		second_line = this_page.partition('\n')[1]
+		if 'YOUR ACCOUNTS' in first_line or 'YOUR ACCOUNTS' in second_line:
+			number_of_account_pages += 1  #these two lines combine multiple page your accounts
+			full_account_string += this_page
+			print(f'Your Accounts found:\n {full_account_string}\n----------------------------')
+			your_account_pages_list.append(full_account_string)
+	return your_account_pages_list
 #-----------------------------------------------------VARIABLES-------------------------------
 
+TFSA = '#339698847'
+RRSP = '#339579618'
+OPEN = '#339555240'
+
 total_list_of_transaction_objects = []
+total_list_of_account_objects = []
 #my_pdf = '/Users/Jamie/Desktop/Quarterly statement.pdf - 2019 339199914.pdf'
 #path = '/Users/Jamie/Desktop/pdf_files/Old_Statements/'
-old_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
+old_style_path = '/Users/Jamie/Desktop/pdf_files/Old_Statements/'
 new_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
 
 #-----------------------------------------------------BEGIN-------------------------------
@@ -217,11 +273,11 @@ new_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
 
 
 #New Style PDFs
-for filename in os.listdir(new_style_path):
-	print(f'Filename:{filename}')
-	pdf_at_complete_path = os.path.join(new_style_path, filename)
-	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
-	all_transaction_lists_on_this_pdf_list = get_new_style_transaction_info_from(pdf_at_complete_path)
+# for filename in os.listdir(new_style_path):
+# 	print(f'Filename:{filename}')
+# 	pdf_at_complete_path = os.path.join(new_style_path, filename)
+# 	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
+# 	all_transaction_lists_on_this_pdf_list = get_new_style_transaction_info_from(pdf_at_complete_path)
 # 	for transaction_lists in all_transaction_lists_on_this_pdf_list:
 # 		for transaction in transaction_lists:
 # 			#create and update the object
@@ -238,6 +294,25 @@ for filename in os.listdir(new_style_path):
 # 			this_transaction.net_amount = transaction[10]
 # 			total_list_of_transaction_objects.append(this_transaction)
 
+#Get the summary from old style PDFs
+for filename in os.listdir(old_style_path):
+	print(f'Filename:{filename}')
+	pdf_at_complete_path = os.path.join(old_style_path, filename)
+	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
+	your_account_pages_list = get_your_account_page_list_from(pdf_at_complete_path)
+	for your_account_page in your_account_pages_list:
+		account_object_list = get_your_account_object_list_from(your_account_page)
+		total_list_of_account_objects += account_object_list
+		#this is where the duplicates start
+		#how to compare the number for each rather than the object itself.  There is no dupicate objects but some duplicate numbers
+		no_duplicates_list = list(set(total_list_of_account_objects))
+
+
+
+#no_duplicates_list = list(set(total_list_of_account_objects))
+print(no_duplicates_list)
+# for account_object in no_duplicates_list:
+# 		print(account_object.__dict__)
 
 # for transaction_object in total_list_of_transaction_objects:
 # 	print(f'{transaction_object.__dict__}\n')

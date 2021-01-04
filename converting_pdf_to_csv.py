@@ -45,6 +45,13 @@ class Account:
 			self.name = ''
 			self.balance = 0
 
+def print_list(this_list):
+	for this_item in this_list:
+		print(this_item)
+
+def print_list_of_objects(this_list_of_objects):
+	for this_object in this_list_of_objects:
+		print(this_object.__dict__)
 
 def get_number_of_pages_from(my_pdf):
     with open(my_pdf, 'rb') as f:
@@ -53,8 +60,7 @@ def get_number_of_pages_from(my_pdf):
         number_of_pages = pdf.getNumPages()
         return number_of_pages
 
-
-def get_the_text_from(pdf_at_complete_path, page): 
+def get_the_text_from(pdf_at_complete_path, page): #this gets the text from each page number sent to it from the PDF
 	#this gets the text from the page of the index
 	index = page + 1
 	with pdfplumber.open(pdf_at_complete_path) as pdf:
@@ -63,8 +69,7 @@ def get_the_text_from(pdf_at_complete_path, page):
 		#print(f'\nScanned page {index} of {pdf_at_complete_path}.')
 		return the_extracted_text
 
-
-def get_lines_containing_dates_list_from(the_extracted_text): #this extracts the date list from each page of extracted data
+def get_lines_containing_dates_list_from(the_extracted_text): #this extracts list of dates from each page of extracted data
 	date_regex = r'((([0-9])|([0-2][0-9])|([3][0-1]))\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\-\d{4})|(T\+[0-9]+)'
 	lines_containing_dates_list = []
 	for line in the_extracted_text.split('\n'):
@@ -73,7 +78,7 @@ def get_lines_containing_dates_list_from(the_extracted_text): #this extracts the
 			lines_containing_dates_list.append(line)
 	return lines_containing_dates_list
 
-def get_transaction_info_from(pdf_at_complete_path):
+def get_transaction_info_from(pdf_at_complete_path): 
 	number_of_pages = get_number_of_pages_from(pdf_at_complete_path)
 	all_transaction_lists_on_this_pdf_list = []
 	for page in range(number_of_pages):
@@ -125,7 +130,7 @@ def get_transaction_info_from(pdf_at_complete_path):
 	return all_transaction_lists_on_this_pdf_list
 	#return this_transaction_list
 
-def get_lines_containing_account_numbers_list_from(this_page):
+def get_lines_containing_account_numbers_list_from(this_page): 
 	account_regex = r'#'
 	lines_containing_account_numbers_list = []
 	for line in this_page.split('\n'):   #this_page.split('\n'):
@@ -133,7 +138,6 @@ def get_lines_containing_account_numbers_list_from(this_page):
 		if match:
 			lines_containing_account_numbers_list.append(line)
 	return lines_containing_account_numbers_list
-
 
 def get_new_style_transaction_info_from(pdf_at_complete_path):
 	number_of_pages = get_number_of_pages_from(pdf_at_complete_path)
@@ -197,6 +201,7 @@ def get_your_account_object_list_from(your_account_page):
 	account_number_list = re.findall(account_numbers_regex, your_account_page)
 	#breakdown the string into lines
 	line_list = your_account_page.splitlines()
+	#search each line in the list for the account numbers in the list of account numbers
 	for line in line_list:
 		for account_number in account_number_list:
 			if account_number in line:
@@ -205,19 +210,20 @@ def get_your_account_object_list_from(your_account_page):
 				verbose_account_name = line_list[index_for_the_line_above]
 				account_name = verbose_account_name.split(' - ')
 				account_name_list.append(account_name[0])
+	#print(account_name_list)
 	for i, account_number in enumerate(account_number_list):
+		#print(account_number)
 		this_account_object = Account(account_number)
 		this_account_object.name = account_name_list[i]
 		account_object_list.append(this_account_object)
+	
 	return account_object_list
-
-
 
 def get_your_account_page_list_from(pdf_at_complete_path): 
 	#this gets the 'your account' pages and combines them if they are on multipe pages then returns the list of them
 	your_account_pages_list = []
 	full_account_string = '' #these two lines are for combining multiple page 'your accounts'
-	number_of_account_pages = 0
+	number_of_your_account_pages = 0
 	number_of_pages = get_number_of_pages_from(pdf_at_complete_path)
 	all_transaction_lists_on_this_pdf_list = []
 	for page in range(number_of_pages):
@@ -229,11 +235,25 @@ def get_your_account_page_list_from(pdf_at_complete_path):
 		first_line = this_page.partition('\n')[0] #this gets the first line of one page for comparison
 		second_line = this_page.partition('\n')[1]
 		if 'YOUR ACCOUNTS' in first_line or 'YOUR ACCOUNTS' in second_line:
-			number_of_account_pages += 1  #these two lines combine multiple page your accounts
-			full_account_string += this_page
-			print(f'Your Accounts found:\n {full_account_string}\n----------------------------')
-			your_account_pages_list.append(full_account_string)
+			number_of_your_account_pages += 1  #these two lines combine multiple page your accounts
+			#print(number_of_account_pages)
+			if number_of_your_account_pages == 1:
+				full_account_string = this_page
+				#print(f'-------Start of single page-------\n Your Accounts found and pages combined:\n {full_account_string}\n-------End of single page-----------')
+			else:
+				full_account_string += this_page
+				#print(f'-------Start of combined string-------\n Your Accounts found and pages combined:\n {full_account_string}\n-------End of combined String-----------')
+	#print(f'--------------\n Your Accounts found and pages combined:\n {full_account_string}\n------------------')
+	your_account_pages_list.append(full_account_string)
 	return your_account_pages_list
+
+def remove_duplicate_accounts_from(total_list_of_account_objects):
+	new_dict = dict()
+	for obj in total_list_of_account_objects:
+		if obj.number not in new_dict:
+			new_dict[obj.number] = obj
+	unique_account_objects_list = list(new_dict.values())
+	return unique_account_objects_list
 #-----------------------------------------------------VARIABLES-------------------------------
 
 TFSA = '#339698847'
@@ -296,26 +316,72 @@ new_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
 
 #Get the summary from old style PDFs
 for filename in os.listdir(old_style_path):
-	print(f'Filename:{filename}')
+	print(f'-----------------------------------------Filename:{filename}')
 	pdf_at_complete_path = os.path.join(old_style_path, filename)
 	#this_pdf_date_list = get_transaction_info_from(pdf_at_complete_path)
 	your_account_pages_list = get_your_account_page_list_from(pdf_at_complete_path)
+	#print(your_account_pages_list)
+
 	for your_account_page in your_account_pages_list:
 		account_object_list = get_your_account_object_list_from(your_account_page)
+		#print_list_of_objects(account_object_list)
 		total_list_of_account_objects += account_object_list
-		#this is where the duplicates start
-		#how to compare the number for each rather than the object itself.  There is no dupicate objects but some duplicate numbers
-		no_duplicates_list = list(set(total_list_of_account_objects))
+		unique_account_objects_list = remove_duplicate_accounts_from(total_list_of_account_objects)
+
+	for account_page in your_account_pages_list:
+		#print(account_page)
+		line_list = account_page.splitlines()
+
+		for line in line_list:
+			print(f'Each line of this account page from the list: {line}')
+			number_of_unique_objects = len(unique_account_objects_list)
+			for position in range(number_of_unique_objects):
+				#print(f'Position: {position}')
+				first_index = 0
+				second_index = 0
+				if unique_account_objects_list[position].number in line:
+					first_index = line_list.index(line)
+					print(f'First index: {first_index}')
+				try:
+					if unique_account_objects_list[position+1].number in line:
+						second_index = line_list.index(line)
+						print(f'Second: index: {second_index}')
+				except IndexError:
+					print(f'Print from index {first_index} to the end which is index {len(line_list)}')
+					pass
+			
+		# print(first_index)
+		# print(second_index)
+
+			# if re.search = 
+			# #if the 
+
+#print_list_of_objects(unique_account_objects_list)		
 
 
 
-#no_duplicates_list = list(set(total_list_of_account_objects))
-print(no_duplicates_list)
-# for account_object in no_duplicates_list:
-# 		print(account_object.__dict__)
 
-# for transaction_object in total_list_of_transaction_objects:
-# 	print(f'{transaction_object.__dict__}\n')
+
+			#search for the first unique object.number
+			#get the index of the line with match
+		# 	try:
+		# 		get everything after object[position].number and before object[position+1].number
+		# 		find the index of the line containin the first match
+		# 		find the index of the line containin the second match
+		# 		grab all lines with indexes between these
+		# except IndexError:
+ 	# 		get everything after object[position].number
+ 	# 		get everything
+
+		# for position, unique_object in enumerate(unique_account_objects_list):
+
+		# 	get the index of the line matching the account number
+
+	
+	
+	
+
+
 
 
 

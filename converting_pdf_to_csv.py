@@ -326,60 +326,80 @@ for filename in os.listdir(old_style_path):
 		account_object_list = get_your_account_object_list_from(your_account_page)
 		#print_list_of_objects(account_object_list)
 		total_list_of_account_objects += account_object_list
+		#print_list_of_objects(total_list_of_account_objects)
+		#print()
 		unique_account_objects_list = remove_duplicate_accounts_from(total_list_of_account_objects)
+		#print_list_of_objects(unique_account_objects_list)
+		#print()
+
+	# for account_page in your_account_pages_list:
+	# 	#print(account_page)
+	# 	first_index = 0
+	# 	second_index = 0
+	# 	line_list = account_page.splitlines()
+
+	# 	for i, line in enumerate(line_list):
+	# 		#print(f'Each line of this account page from the list: {line}')
+	# 		number_of_unique_objects = len(unique_account_objects_list)
+	# 		#print(number_of_unique_objects)
+			
+	# 		for position in range(number_of_unique_objects): #0, 1, 
+	# 			#print(f'Position: {position} {range(number_of_unique_objects)}')
+	# 			# first_index = 0
+	# 			# second_index = 0
+	# 			if unique_account_objects_list[position].number in line:
+	# 				first_index = line_list.index(line) #gets the index of the line matching the first account number
+	# 				print(f'First index: {first_index}') 
+	# 			try:
+	# 				if unique_account_objects_list[position+1].number in line:
+	# 					second_index = line_list.index(line) #gets the index of the line matching the second account number
+	# 					print(f'Second: index: {second_index}')
+					
+	# 			except IndexError:
+					
+	# 				#print(f'Second index on fail: {len(line_list)}')
+	# 				pass
+	# 			# print(first_index)
+	# 			# print(second_index)
+	# 			total_list_between_indexes = []
+	# 			for ii in range(first_index-1, second_index-1):
+	# 				#print(ii)
+	# 				total_list_between_indexes.append(line_list[ii])
+	# 				# for iii in range(second_index-1, len(line_list)):
+	# 				# 	total_list_between_indexes.append(line_list[iii])
+			
+	# 			print_list(total_list_between_indexes)
+	# 	print('-----------------------------------------')
+	
+
 
 	for account_page in your_account_pages_list:
-		#print(account_page)
+		index_list = []
 		line_list = account_page.splitlines()
-
-		for line in line_list:
-			print(f'Each line of this account page from the list: {line}')
-			number_of_unique_objects = len(unique_account_objects_list)
-			for position in range(number_of_unique_objects):
-				#print(f'Position: {position}')
-				first_index = 0
-				second_index = 0
-				if unique_account_objects_list[position].number in line:
-					first_index = line_list.index(line)
-					print(f'First index: {first_index}')
-				try:
-					if unique_account_objects_list[position+1].number in line:
-						second_index = line_list.index(line)
-						print(f'Second: index: {second_index}')
-				except IndexError:
-					print(f'Print from index {first_index} to the end which is index {len(line_list)}')
-					pass
-			
-		# print(first_index)
-		# print(second_index)
-
-			# if re.search = 
-			# #if the 
-
-#print_list_of_objects(unique_account_objects_list)		
+		for account_object in unique_account_objects_list:
+			#print(f'account number for search: {account_object.number}')
+			for line in line_list:
+				#print(f'line: {line}')
+				if account_object.number in line:
+					#print(f'account number found in line: {account_object.number}')
+					this_index = line_list.index(line)
+					#print(f'index of line containing the accout number found: {this_index}')
+					index_list.append(this_index-1)
+		index_list.append(len(line_list))
+		index_list.sort()
+		for i in range(len(index_list)-1):  #this is the count of the items in index_list
+			#print(i)
+			each_list = []
+			for ii in range(index_list[i], index_list[i+1]): #this is the 
+				#print(ii)
+				each_list.append(line_list[ii])
+			print_list(each_list) 
+			print()
 
 
 
 
 
-			#search for the first unique object.number
-			#get the index of the line with match
-		# 	try:
-		# 		get everything after object[position].number and before object[position+1].number
-		# 		find the index of the line containin the first match
-		# 		find the index of the line containin the second match
-		# 		grab all lines with indexes between these
-		# except IndexError:
- 	# 		get everything after object[position].number
- 	# 		get everything
-
-		# for position, unique_object in enumerate(unique_account_objects_list):
-
-		# 	get the index of the line matching the account number
-
-	
-	
-	
 
 
 

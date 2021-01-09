@@ -397,6 +397,7 @@ new_style_path = '/Users/Jamie/Desktop/pdf_files/New_Statements/'
 
 #What do I need from each file?  All unique accounts with name, number, subaccounts (with name, number, balance)
 for filename in os.listdir(old_style_path):
+	total_list_of_account_objects = []
 	print(f'-----------------------------------------Filename:{filename}')
 	pdf_at_complete_path = os.path.join(old_style_path, filename)
 
@@ -420,11 +421,18 @@ for filename in os.listdir(old_style_path):
 	#create and update the account objects here after I have all of the information
 
 	for each_account_attributes_list in list_of_all_accounts_attributes_lists:
-		for each_account_attribute in each_account_attributes_list:
-			this_account = Account(each_account_attributes_list[0])
-			this_account.name = each_account_attributes_list[1]
-			this_account.book_value = each_account_attributes_list[2]
-			this_account.market_value = each_account_attributes_list[3]
+		this_account = Account(each_account_attributes_list[0])
+		this_account.name = each_account_attributes_list[1]
+		this_account.book_value = each_account_attributes_list[2]
+		this_account.market_value = each_account_attributes_list[3]	
+		total_list_of_account_objects.append(this_account)
+	#print_list_of_objects(total_list_of_account_objects)
+
+	for account_object in total_list_of_account_objects:
+		this_statement.account = account_object
+
+	print(this_statement.__dict__)
+
 
 
 

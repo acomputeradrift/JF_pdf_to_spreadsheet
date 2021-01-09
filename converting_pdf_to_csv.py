@@ -30,7 +30,7 @@ class Statement:
 			self.start_date = start_and_end_date[0]  #how to make this a timedelta?
 			self.end_date = start_and_end_date[1]  #how to make this a timedelta?
 			self.client_number = 0
-			#self.account = Account()
+			self.account = Account
 		
 
 class Transaction:
@@ -51,9 +51,10 @@ class Account:
 		def __init__(self,number):
 			self.number = number
 			self.name = ''
-			self.total_of_investments = 0
+			self.book_value = 0
+			self.market_value = 0
 			#self.total_date = datetime #this is the final date of the time period of the statement
-			#self.sub_account = SubAccount()
+			self.sub_account = SubAccount
 
 
 class SubAccount:
@@ -65,7 +66,7 @@ class SubAccount:
 			self.number_of_units = 0
 			self.unit_price = 0
 			self.market_value = 0
-			#self.transaction = Transaction()
+			self.transaction = Transaction
 
 #------------------------------------------REUSABLE METHODS---------------------------
 
@@ -264,7 +265,7 @@ def get_new_style_transaction_info_from(pdf_at_complete_path):
 
 #------------------------------------------ACCOUNT METHODS---------------------------
 
-def get_your_account_page_list_from(pdf_at_complete_path): 
+def get_your_account_page_list_from(pdf_at_complete_path): #gather all pages with "Your Account" on it, combine if needed
 	#this gets the 'your account' pages and combines them if they are on multipe pages then returns the list of them
 	your_account_pages_list = []
 	full_account_string = '' #these two lines are for combining multiple page 'your accounts'
@@ -292,63 +293,38 @@ def get_your_account_page_list_from(pdf_at_complete_path):
 	your_account_pages_list.append(full_account_string)
 	return your_account_pages_list
 
-def get_your_account_object_list_from(your_account_pages_list): #account objects created here and update with name and number
+def get_your_account_number_list_from(your_account_pages_list): #account numbers found and master list of unique account numbers created
 
 	#change this to create a list of account numbers, DO NOT update the object
-
-	total_list_of_account_objects = []
+	total_list_of_account_numbers = []
 	for your_account_page in your_account_pages_list:
-		account_object_list = []
-		account_number_list = []
-		account_name_list = []
+		account_numbers_list = []
 		account_numbers_regex = r'(?<=Account number:).+?(?=\n)'
-		account_number_list = re.findall(account_numbers_regex, your_account_page)
-		#breakdown the string into lines
-		line_list = your_account_page.splitlines()
-		#search each line in the list for the account numbers in the list of account numbers
-		for line in line_list:
-			for account_number in account_number_list:
-				if account_number in line:
-					index = line_list.index(line)
-					index_for_the_line_above = index - 1
-					verbose_account_name = line_list[index_for_the_line_above]
-					account_name = verbose_account_name.split(' - ')
-					account_name_list.append(account_name[0])
-		#print(account_name_list)
-		for i, account_number in enumerate(account_number_list):
-			#print(account_number)
-			this_account_object = Account(account_number)
-			this_account_object.name = account_name_list[i]
-			account_object_list.append(this_account_object)
-	total_list_of_account_objects += account_object_list
-	unique_account_objects_list = remove_duplicate_accounts_from(total_list_of_account_objects)	
+		account_numbers_list = re.findall(account_numbers_regex, your_account_page)
+	total_list_of_account_numbers += account_numbers_list
+	unique_account_numbers_list = remove_duplicate_account_numbers_from(total_list_of_account_numbers)	
+	#print(unique_account_numbers_list)
+	return unique_account_numbers_list
 
-	#return list of unique account numbers, NOT objects
-
-	return unique_account_objects_list
-
-def remove_duplicate_accounts_from(total_list_of_account_objects): #called from get_your_account_object_list_from(your_account_pages_list)
+def remove_duplicate_account_numbers_from(total_list_of_account_numbers): #called from get_your_account_numbers_list_from(your_account_pages_list)
 	new_dict = dict()
-	for obj in total_list_of_account_objects:
-		if obj.number not in new_dict:
-			new_dict[obj.number] = obj
-	unique_account_objects_list = list(new_dict.values())
-	return unique_account_objects_list
+	for account_number in total_list_of_account_numbers:
+		if account_number not in new_dict:
+			new_dict[account_number] = account_number
+	unique_account_numbers_list = list(new_dict.values())
+	return unique_account_numbers_list
 
-def get_each_account_info_list(unique_account_objects_list, your_account_page_list):
-
-	#pass in list of unique account names, not OBJECTS
-
+def get_each_account_number_info_list(unique_account_numbers_list, your_account_page_list):
 	list_of_all_account_data_lists = []
 	for your_account_page in your_account_page_list:
 		list_of_lists = []
 		index_list = []
 		line_list = your_account_page.splitlines()
-		for account_object in unique_account_objects_list:
+		for account_number in unique_account_numbers_list:
 			#print(f'account number for search: {account_object.number}')
 			for line in line_list:
 				#print(f'line: {line}')
-				if account_object.number in line:
+				if account_number in line:
 					#print(f'account number found in line: {account_object.number}')
 					this_index = line_list.index(line)
 					#print(f'index of line containing the accout number found: {this_index}')
@@ -365,13 +341,50 @@ def get_each_account_info_list(unique_account_objects_list, your_account_page_li
 			# print_list(each_list) 
 	return list_of_all_account_data_lists 
 
-
+def get_attributes_for_each_unique_account_number_from(list_of_all_account_data_lists, unique_account_numbers_list):
+	list_of_all_accounts_attributes_lists = []
+	for each_account_number in unique_account_numbers_list:
+		account_number = 0
+		account_name = 'no name'
+		book_value = 0
+		market_value = 0
+		for each_account_number_info in list_of_all_account_data_lists:
+			for each_line in each_account_number_info:
+				if each_account_number in each_line:
+					account_number_index = each_account_number_info.index(each_line)
+					verbose_account_number = each_account_number_info[account_number_index].split(':')
+					account_number = verbose_account_number[1]
+					#print(f'Account number found: {account_number}')
+					verbose_account_name = each_account_number_info[account_number_index-1].split(' - ')
+					account_name = verbose_account_name[0]
+					for each_line in each_account_number_info:
+						#print(each_line)
+						total_of_investments_regex = r'(Total of investments )(.*)'
+						match = re.search(total_of_investments_regex, each_line)
+						if match:
+							#print('Total investments match!')
+							both_totals_of_investments = match.group(2).split(' ')
+							book_value = float(both_totals_of_investments[0].replace('$','').replace(',',''))
+							market_value = float(both_totals_of_investments[1].replace('$','').replace(',',''))
+							#print(f'Book value found: {book_value}')
+							#print(f'Market value found: {market_value}')
+						else:
+							#print('No Total of investments regex match')
+							pass
+				else:
+					#print(f'No number, name when searching for this account number: {each_account_number}')
+					pass
+		this_account_attributes_list = [account_number, account_name, book_value, market_value]
+		#print(this_account_attributes_list)
+		list_of_all_accounts_attributes_lists.append(this_account_attributes_list)
+	#print_list_of_lists(list_of_all_accounts_attributes_lists)
+	return list_of_all_accounts_attributes_lists
 
 #--------------------------------------------VARIABLES-------------------------------------
 
-TFSA = '#339698847'
-RRSP = '#339579618'
-OPEN = '#339555240'
+# TFSA = '#339698847'
+# RRSP = '#339579618'
+# OPEN = '#339555240'
 
 total_list_of_transaction_objects = []
 total_list_of_account_objects = []
@@ -387,7 +400,7 @@ for filename in os.listdir(old_style_path):
 	print(f'-----------------------------------------Filename:{filename}')
 	pdf_at_complete_path = os.path.join(old_style_path, filename)
 
-	#----------create the statement object and gather the info to populate it
+	#----------gather the attributes to populate the STATEMENT objects and then create them
 
 	start_and_end_date = get_start_and_end_date_from(pdf_at_complete_path)
 	client_number = get_the_client_number_from(pdf_at_complete_path)
@@ -395,15 +408,23 @@ for filename in os.listdir(old_style_path):
 	this_statement = Statement(start_and_end_date) #can this be a touple of datetimes?
 	this_statement.client_number = client_number
 
-	#----------create the account objects and gather the info to populate it
+	#----------gather the attributes to populate the ACCOUNT objects and then create them
 
 	your_account_pages_list = get_your_account_page_list_from(pdf_at_complete_path) #gets any page that has "Your Account" on the top, combines into 1 if needed
-	unique_account_objects_list = get_your_account_object_list_from(your_account_pages_list) #multiple account objects created here and updated with name and number
-	#print_list_of_objects(unique_account_objects_list)
-	list_of_all_account_data_lists = get_each_account_info_list(unique_account_objects_list, your_account_pages_list)
-	print_list_of_lists(list_of_all_account_data_lists)
+	unique_account_numbers_list = get_your_account_number_list_from(your_account_pages_list)
+	list_of_all_account_data_lists = get_each_account_number_info_list(unique_account_numbers_list, your_account_pages_list)
+	list_of_all_accounts_attributes_lists = get_attributes_for_each_unique_account_number_from(list_of_all_account_data_lists, unique_account_numbers_list)
+	#print_list_of_lists(list_of_all_accounts_attributes_lists)
+
 
 	#create and update the account objects here after I have all of the information
+
+	for each_account_attributes_list in list_of_all_accounts_attributes_lists:
+		for each_account_attribute in each_account_attributes_list:
+			this_account = Account(each_account_attributes_list[0])
+			this_account.name = each_account_attributes_list[1]
+			this_account.book_value = each_account_attributes_list[2]
+			this_account.market_value = each_account_attributes_list[3]
 
 
 
